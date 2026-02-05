@@ -10,6 +10,7 @@ import productRoutes from './products/routes/productRoutes';
 import cartRoutes from './products/routes/cartRoutes';
 import wishlistRoutes from './products/routes/wishlistRoutes';
 import orderRoutes from './products/routes/orderRoutes';
+import ticketRoutes from './products/routes/ticketRoutes';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
@@ -47,6 +48,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/tickets', ticketRoutes);
 
 app.get('/', (req, res) => {
   logger.success('anonymous', 'rootRoute', 'Root endpoint accessed successfully');

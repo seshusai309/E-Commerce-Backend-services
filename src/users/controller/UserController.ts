@@ -190,8 +190,7 @@ export class UserController {
             addresses: user.addresses,
             role: user.role,
             status: user.status
-          },
-          token
+          }
         }
       });
     } catch (error: any) {
