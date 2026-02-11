@@ -118,22 +118,35 @@ export class ProductController {
     }
   }
 
-  // Get products by category
+  // Get products by category (supports multiple categories via query param)
   async getProductsByCategory(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { category } = req.params;
-      const categoryStr = Array.isArray(category) ? category[0] : category;
+      const { categories } = req.query;
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
 
-      const { products, total } = await this.productRepository.findByCategory(categoryStr, page, limit);
+      // Parse categories from query string (comma-separated)
+      let categoriesArray: string[] = [];
+      if (typeof categories === 'string') {
+        categoriesArray = categories.split(',').map(cat => cat.trim()).filter(cat => cat.length > 0);
+      }
+
+      if (categoriesArray.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'At least one category must be specified'
+        });
+        return;
+      }
+
+      const { products, total } = await this.productRepository.findByCategories(categoriesArray, page, limit);
 
       // Calculate pagination metadata
       const totalPages = Math.ceil(total / limit);
       const hasNextPage = page < totalPages;
       const hasPrevPage = page > 1;
 
-      logger.success('anonymous', 'getProductsByCategory', `Retrieved ${products.length} products for category: ${categoryStr} (page ${page} of ${totalPages})`);
+      logger.success('anonymous', 'getProductsByCategory', `Retrieved ${products.length} products for categories: ${categoriesArray.join(', ')} (page ${page} of ${totalPages})`);
 
       res.status(200).json({
         success: true,
@@ -146,7 +159,7 @@ export class ProductController {
           hasNextPage,
           hasPrevPage,
         },
-        message: `Products retrieved successfully for category: ${categoryStr}`
+        message: `Products retrieved successfully for categories: ${categoriesArray.join(', ')}`
       });
     } catch (error: any) {
       logger.error('anonymous', 'getProductsByCategory', `Failed to get products by category: ${error.message}`);

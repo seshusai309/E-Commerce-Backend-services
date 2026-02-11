@@ -124,12 +124,34 @@ export class ProductRepository {
     }
   }
 
-  // Get products by category
+  // Get products by category (single category - kept for backward compatibility)
   async findByCategory(category: string, page: number = 1, limit: number = 10): Promise<{ products: Product[], total: number }> {
     try {
       return await this.findAll(page, limit, category);
     } catch (error: any) {
       logger.error('ProductRepository', 'findByCategory', `Failed to get products by category: ${error.message}`);
+      throw error;
+    }
+  }
+
+  // Get products by multiple categories
+  async findByCategories(categories: string[], page: number = 1, limit: number = 10): Promise<{ products: Product[], total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+      const query = {
+        category: { $in: categories }
+      };
+
+      const products = await ProductModel.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await ProductModel.countDocuments(query);
+
+      return { products, total };
+    } catch (error: any) {
+      logger.error('ProductRepository', 'findByCategories', `Failed to get products by categories: ${error.message}`);
       throw error;
     }
   }

@@ -9,7 +9,7 @@ const productController = new ProductController();
 router.get('/', productController.getProducts.bind(productController));
 router.get('/search', productController.searchProducts.bind(productController));
 router.get('/categories', productController.getCategories.bind(productController));
-router.get('/category/:category', productController.getProductsByCategory.bind(productController));
+router.get('/category', productController.getProductsByCategory.bind(productController));
 router.get('/stats', productController.getProductStats.bind(productController));
 
 // Public routes (product details)
