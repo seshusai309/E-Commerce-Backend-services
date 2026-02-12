@@ -18,6 +18,16 @@ export class TicketController {
   async createTicket(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?._id;
+      
+      // Ensure user is authenticated
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+      
       const { subject, category, priority, message, orderId } = req.body;
 
       // Validate required fields
@@ -73,6 +83,16 @@ export class TicketController {
   async getUserTickets(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?._id;
+      
+      // Ensure user is authenticated
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+
       const { page = 1, limit = 10, status, category } = req.query;
 
       const filters: any = { user: userId };
@@ -80,13 +100,13 @@ export class TicketController {
       if (category) filters.category = category;
 
       const tickets = await this.ticketRepository.findByUser(
-        userId,
+        userId.toString(),
         Number(page),
         Number(limit),
         filters
       );
 
-      const total = await this.ticketRepository.countByUser(userId, filters);
+      const total = await this.ticketRepository.countByUser(userId.toString(), filters);
 
       res.json({
         success: true,
@@ -108,9 +128,22 @@ export class TicketController {
   async getTicketById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?._id;
+      
+      // Ensure user is authenticated
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+      
       const { ticketId } = req.params;
 
-      const ticket = await this.ticketRepository.findByTicketId(ticketId);
+      // Ensure ticketId is a string
+      const ticketIdStr = Array.isArray(ticketId) ? ticketId[0] : ticketId;
+
+      const ticket = await this.ticketRepository.findByTicketId(ticketIdStr);
 
       if (!ticket) {
         res.status(404).json({
@@ -122,7 +155,14 @@ export class TicketController {
 
       // Check if user owns the ticket (for user routes)
       // Admin routes are protected by requireAdmin middleware
-      if (ticket.user.toString() !== userId?.toString()) {
+      console.log('Debug - Ticket user ID:', ticket.user.toString());
+      console.log('Debug - Current user ID:', userId.toString());
+      console.log('Debug - Ticket found:', ticket.ticketId);
+      
+      // Handle both populated and non-populated user field
+      const ticketUserId = ticket.user._id ? ticket.user._id.toString() : ticket.user.toString();
+      
+      if (ticketUserId !== userId.toString()) {
         res.status(403).json({
           success: false,
           message: 'Access denied'
@@ -144,8 +184,21 @@ export class TicketController {
   async addMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?._id;
+      
+      // Ensure user is authenticated
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+      
       const { ticketId } = req.params;
       const { message, attachments } = req.body;
+
+      // Ensure ticketId is a string
+      const ticketIdStr = Array.isArray(ticketId) ? ticketId[0] : ticketId;
 
       if (!message) {
         res.status(400).json({
@@ -155,7 +208,7 @@ export class TicketController {
         return;
       }
 
-      const ticket = await this.ticketRepository.findByTicketId(ticketId);
+      const ticket = await this.ticketRepository.findByTicketId(ticketIdStr);
 
       if (!ticket) {
         res.status(404).json({
@@ -167,7 +220,10 @@ export class TicketController {
 
       // Check if user owns the ticket (for user routes)
       // Admin routes are protected by requireAdmin middleware
-      if (ticket.user.toString() !== userId?.toString()) {
+      // Handle both populated and non-populated user field
+      const ticketUserId = ticket.user._id ? ticket.user._id.toString() : ticket.user.toString();
+      
+      if (ticketUserId !== userId.toString()) {
         res.status(403).json({
           success: false,
           message: 'Access denied'
@@ -187,7 +243,7 @@ export class TicketController {
         createdAt: new Date()
       };
 
-      const updatedTicket = await this.ticketRepository.addMessage(ticketId, messageData);
+      const updatedTicket = await this.ticketRepository.addMessage(ticketIdStr, messageData);
 
       // Update ticket status based on customer message
       let newStatus = ticket.status;
@@ -195,7 +251,7 @@ export class TicketController {
         newStatus = TicketStatus.OPEN;
       }
 
-      await this.ticketRepository.updateStatus(ticketId, newStatus);
+      await this.ticketRepository.updateStatus(ticketIdStr, newStatus);
 
       res.json({
         success: true,
@@ -214,6 +270,9 @@ export class TicketController {
       const { ticketId } = req.params;
       const { status } = req.body;
 
+      // Ensure ticketId is a string
+      const ticketIdStr = Array.isArray(ticketId) ? ticketId[0] : ticketId;
+
       if (!Object.values(TicketStatus).includes(status)) {
         res.status(400).json({
           success: false,
@@ -222,7 +281,7 @@ export class TicketController {
         return;
       }
 
-      const ticket = await this.ticketRepository.findByTicketId(ticketId);
+      const ticket = await this.ticketRepository.findByTicketId(ticketIdStr);
 
       if (!ticket) {
         res.status(404).json({
@@ -232,7 +291,7 @@ export class TicketController {
         return;
       }
 
-      const updatedTicket = await this.ticketRepository.updateStatus(ticketId, status);
+      const updatedTicket = await this.ticketRepository.updateStatus(ticketIdStr, status);
 
       res.json({
         success: true,
@@ -251,6 +310,9 @@ export class TicketController {
       const { ticketId } = req.params;
       const { priority } = req.body;
 
+      // Ensure ticketId is a string
+      const ticketIdStr = Array.isArray(ticketId) ? ticketId[0] : ticketId;
+
       if (!Object.values(TicketPriority).includes(priority)) {
         res.status(400).json({
           success: false,
@@ -259,7 +321,7 @@ export class TicketController {
         return;
       }
 
-      const ticket = await this.ticketRepository.findByTicketId(ticketId);
+      const ticket = await this.ticketRepository.findByTicketId(ticketIdStr);
 
       if (!ticket) {
         res.status(404).json({
@@ -269,7 +331,7 @@ export class TicketController {
         return;
       }
 
-      const updatedTicket = await this.ticketRepository.updatePriority(ticketId, priority);
+      const updatedTicket = await this.ticketRepository.updatePriority(ticketIdStr, priority);
 
       res.json({
         success: true,
@@ -287,7 +349,10 @@ export class TicketController {
     try {
       const { ticketId } = req.params;
 
-      const ticket = await this.ticketRepository.findByTicketId(ticketId);
+      // Ensure ticketId is a string
+      const ticketIdStr = Array.isArray(ticketId) ? ticketId[0] : ticketId;
+
+      const ticket = await this.ticketRepository.findByTicketId(ticketIdStr);
 
       if (!ticket) {
         res.status(404).json({
@@ -297,7 +362,7 @@ export class TicketController {
         return;
       }
 
-      const updatedTicket = await this.ticketRepository.escalate(ticketId);
+      const updatedTicket = await this.ticketRepository.escalate(ticketIdStr);
 
       res.json({
         success: true,
@@ -349,9 +414,22 @@ export class TicketController {
   async closeTicket(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?._id;
+      
+      // Ensure user is authenticated
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'User not authenticated'
+        });
+        return;
+      }
+      
       const { ticketId } = req.params;
 
-      const ticket = await this.ticketRepository.findByTicketId(ticketId);
+      // Ensure ticketId is a string
+      const ticketIdStr = Array.isArray(ticketId) ? ticketId[0] : ticketId;
+
+      const ticket = await this.ticketRepository.findByTicketId(ticketIdStr);
 
       if (!ticket) {
         res.status(404).json({
@@ -362,7 +440,10 @@ export class TicketController {
       }
 
       // Check if user owns the ticket
-      if (ticket.user.toString() !== userId?.toString()) {
+      // Handle both populated and non-populated user field
+      const ticketUserId = ticket.user._id ? ticket.user._id.toString() : ticket.user.toString();
+      
+      if (ticketUserId !== userId.toString()) {
         res.status(403).json({
           success: false,
           message: 'Access denied'
@@ -370,7 +451,7 @@ export class TicketController {
         return;
       }
 
-      const updatedTicket = await this.ticketRepository.updateStatus(ticketId, TicketStatus.CLOSED);
+      const updatedTicket = await this.ticketRepository.updateStatus(ticketIdStr, TicketStatus.CLOSED);
 
       res.json({
         success: true,
