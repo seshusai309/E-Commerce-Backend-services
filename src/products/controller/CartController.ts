@@ -115,6 +115,19 @@ export class CartController {
       // Get or create cart
       const cart = await this.getOrCreateCart(req);
 
+      // If this is a new guest cart, set the guest ID cookie
+      if (!req.user && !req.cookies?.guest_id && cart) {
+        const guestIdForCookie = cart._id.toString();
+        
+        // Store guest ID in HTTP-only cookie
+        res.cookie('guest_id', guestIdForCookie, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+      }
+
       // Create cart item
       const cartItem = {
         productId: product._id.toString(), // Use MongoDB _id
@@ -158,6 +171,19 @@ export class CartController {
 
       // Get cart
       const cart = await this.getOrCreateCart(req);
+
+      // If this is a new guest cart, set the guest ID cookie
+      if (!req.user && !req.cookies?.guest_id && cart) {
+        const guestIdForCookie = cart._id.toString();
+        
+        // Store guest ID in HTTP-only cookie
+        res.cookie('guest_id', guestIdForCookie, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+      }
 
       // Check if product exists and has enough stock
       const product = await this.productRepository.findById(productIdStr);
@@ -222,6 +248,19 @@ export class CartController {
       // Get cart
       const cart = await this.getOrCreateCart(req);
 
+      // If this is a new guest cart, set the guest ID cookie
+      if (!req.user && !req.cookies?.guest_id && cart) {
+        const guestIdForCookie = cart._id.toString();
+        
+        // Store guest ID in HTTP-only cookie
+        res.cookie('guest_id', guestIdForCookie, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+      }
+
       // Remove item from cart
       const updatedCart = await this.cartRepository.removeItem(cart._id.toString(), productIdStr);
 
@@ -251,6 +290,19 @@ export class CartController {
     try {
       // Get cart
       const cart = await this.getOrCreateCart(req);
+
+      // If this is a new guest cart, set the guest ID cookie
+      if (!req.user && !req.cookies?.guest_id && cart) {
+        const guestIdForCookie = cart._id.toString();
+        
+        // Store guest ID in HTTP-only cookie
+        res.cookie('guest_id', guestIdForCookie, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+        });
+      }
 
       // Clear cart
       const clearedCart = await this.cartRepository.clearCart(cart._id.toString());
