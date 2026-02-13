@@ -88,7 +88,6 @@ const ticketSchema = new Schema<ITicket>({
 }, { timestamps: true });
 
 // Index for efficient lookups
-ticketSchema.index({ ticketId: 1 });
 ticketSchema.index({ user: 1 });
 ticketSchema.index({ status: 1 });
 ticketSchema.index({ category: 1 });
